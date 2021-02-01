@@ -127,14 +127,17 @@ def loop():
     global friendliness
 
     qc = QuantumCircuit(QuantumRegister(1, alice_name.lower()),
-                        QuantumRegister(1, bob_name.lower()))
+                        QuantumRegister(1, bob_name.lower()),QuantumRegister(1, 'ancilla'))
     j_hat = np.matrix(scipy.linalg.expm(
         np.kron(-1j * GAMMA * d_hat, d_hat / 2)))
-    qc.unitary(Operator(j_hat), [0, 1], label="Friendship")
+#    qc.unitary(Operator(j_hat), [0, 1], label="Friendship")
+    qc.rx(-np.pi/2,2)
+    qc.cx(2,0)
+    qc.cx(2,1)
 
     def defect(q):
-        qc.x(q)
-        qc.z(q)
+        qc.x(q)     #Defecting is just a \sigma_x now
+#        qc.z(q)
 
     def quantum(q):
         qc.y(q)
@@ -193,7 +196,10 @@ def loop():
         alice_move = prompt(0)
     clear_screen()
 
-    qc.unitary(Operator(j_hat.H), [0, 1], label="Battle")
+#    qc.unitary(Operator(j_hat.H), [0, 1], label="Battle")
+    qc.cx(2,1)
+    qc.cx(2,0)
+    qc.rx(np.pi/2,2)
 
     msg = ""
     msg += "{} used {}{}!\n".format(alice_name, alice_move,
@@ -216,7 +222,7 @@ def loop():
     bob_exp = 0
 
     for outcome, prob in result.items():
-        alice, bob = int(outcome[1]), int(outcome[0])
+        alice, bob = int(outcome[2]), int(outcome[1])  #These numbers have been changed to incorporate the extra qubit added
         alice, bob = payoff(alice, bob)
         alice_exp += prob * alice
         bob_exp += prob * bob
