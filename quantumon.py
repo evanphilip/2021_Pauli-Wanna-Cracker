@@ -6,6 +6,8 @@ import random
 import sys
 import time
 import os
+from qiskit_ionq_provider import IonQProvider 
+
 
 
 os.system('')
@@ -126,8 +128,7 @@ def loop():
     global GAMMA
     global friendliness
 
-    qc = QuantumCircuit(QuantumRegister(1, alice_name.lower()),
-                        QuantumRegister(1, bob_name.lower()),QuantumRegister(1, 'ancilla'),ClassicalRegister(3))
+    qc = QuantumCircuit(3,3)
     j_hat = np.matrix(scipy.linalg.expm(
         np.kron(-1j * GAMMA * d_hat, d_hat / 2)))
 #    qc.unitary(Operator(j_hat), [0, 1], label="Friendship")
@@ -217,8 +218,11 @@ def loop():
     alice_hp = min(alice_hp, 100)
     
     shots=1000
-    backend = Aer.get_backend('qasm_simulator')
-    job = execute(qc, backend,shots=shots)
+    provider = IonQProvider(token='token')
+    backend = provider.get_backend("ionq_simulator")
+    job = backend.run(qc, shots=1000)
+#    backend = Aer.get_backend('qasm_simulator')
+#    job = execute(qc, backend,shots=shots)
     result = job.result().get_counts()
 
     alice_exp = 0
