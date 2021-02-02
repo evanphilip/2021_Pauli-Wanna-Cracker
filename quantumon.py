@@ -1,4 +1,4 @@
-from qiskit import Aer, QuantumCircuit, QuantumRegister, execute
+from qiskit import Aer, QuantumCircuit, QuantumRegister, ClassicalRegister, execute
 from qiskit.quantum_info import Operator
 import numpy as np
 import scipy
@@ -127,7 +127,7 @@ def loop():
     global friendliness
 
     qc = QuantumCircuit(QuantumRegister(1, alice_name.lower()),
-                        QuantumRegister(1, bob_name.lower()),QuantumRegister(1, 'ancilla'))
+                        QuantumRegister(1, bob_name.lower()),QuantumRegister(1, 'ancilla'),ClassicalRegister(3))
     j_hat = np.matrix(scipy.linalg.expm(
         np.kron(-1j * GAMMA * d_hat, d_hat / 2)))
 #    qc.unitary(Operator(j_hat), [0, 1], label="Friendship")
@@ -200,6 +200,8 @@ def loop():
     qc.cx(2,1)
     qc.cx(2,0)
     qc.rx(np.pi/2,2)
+    
+    qc.measure(range(3),range(3))
 
     msg = ""
     msg += "{} used {}{}!\n".format(alice_name, alice_move,
@@ -213,15 +215,17 @@ def loop():
         bob_hp += 5
     bob_hp = min(bob_hp, 100)
     alice_hp = min(alice_hp, 100)
-
-    backend = Aer.get_backend('statevector_simulator')
-    job = execute(qc, backend)
+    
+    shots=1000
+    backend = Aer.get_backend('qasm_simulator')
+    job = execute(qc, backend,shots=shots)
     result = job.result().get_counts()
 
     alice_exp = 0
     bob_exp = 0
 
     for outcome, prob in result.items():
+        prob=prob/shots
         alice, bob = int(outcome[2]), int(outcome[1])  #These numbers have been changed to incorporate the extra qubit added
         alice, bob = payoff(alice, bob)
         alice_exp += prob * alice
